@@ -1,7 +1,10 @@
 use std::error::Error;
 
-use axum::{http::StatusCode, response::IntoResponse, routing::post, serve::Serve, Router};
+use axum::{routing::post, serve::Serve, Router};
+use routes::{login, logout, signup, verify_2fa, verify_token};
 use tower_http::services::ServeDir;
+
+pub mod routes;
 
 // This struct encapsulates our application-related logic.
 pub struct Application {
@@ -33,24 +36,4 @@ impl Application {
         println!("listening on {}", &self.address);
         self.server.await
     }
-}
-
-async fn signup() -> impl IntoResponse {
-    StatusCode::OK.into_response()
-}
-
-async fn login() -> impl IntoResponse {
-    StatusCode::OK.into_response()
-}
-
-async fn logout() -> impl IntoResponse {
-    StatusCode::OK.into_response()
-}
-
-async fn verify_2fa() -> impl IntoResponse {
-    StatusCode::OK.into_response()
-}
-
-async fn verify_token() -> impl IntoResponse {
-    StatusCode::OK.into_response()
 }
