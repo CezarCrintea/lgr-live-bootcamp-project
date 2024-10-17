@@ -21,11 +21,11 @@ pub async fn signup(
 
     let mut user_store = state.user_store.write().await;
 
-    if let Ok(_) = user_store.get_user(&email) {
+    if let Ok(_) = user_store.get_user(&email).await {
         return Err(AuthAPIError::UserAlreadyExists);
     }
 
-    let result = user_store.add_user(user);
+    let result = user_store.add_user(user).await;
     if result.is_err() {
         return Err(AuthAPIError::UnexpectedError);
     }
