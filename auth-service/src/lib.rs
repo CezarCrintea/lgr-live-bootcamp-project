@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use tower_http::{cors::CorsLayer, services::ServeDir};
 
 pub mod app_state;
-mod domain;
+pub mod domain;
 pub mod routes;
 pub mod services;
 pub mod utils;
