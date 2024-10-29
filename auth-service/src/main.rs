@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use auth_service::{
     app_state::AppState,
-    domain::EmailClient,
     services::{
         hashmap_two_fa_code_store::HashmapTwoFACodeStore, hashmap_user_store::HashmapUserStore,
         hashset_banned_token_store::HashsetBannedTokenStore, mock_email_client::MockEmailClient,
