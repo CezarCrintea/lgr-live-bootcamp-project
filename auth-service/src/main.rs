@@ -1,10 +1,18 @@
 use std::sync::Arc;
 
 use auth_service::{
-    app_state::AppState, get_postgres_pool, services::{
-        hashmap_two_fa_code_store::HashmapTwoFACodeStore, hashmap_user_store::HashmapUserStore,
-        hashset_banned_token_store::HashsetBannedTokenStore, mock_email_client::MockEmailClient,
-    }, utils::constants::{prod, DATABASE_URL}, Application
+    app_state::AppState,
+    get_postgres_pool,
+    services::{
+        data_stores::{
+            hashmap_two_fa_code_store::HashmapTwoFACodeStore, hashmap_user_store::HashmapUserStore,
+            hashset_banned_token_store::HashsetBannedTokenStore,
+            postgres_user_store::PostgresUserStore,
+        },
+        mock_email_client::MockEmailClient,
+    },
+    utils::constants::{prod, DATABASE_URL},
+    Application,
 };
 use sqlx::PgPool;
 use tokio::sync::RwLock;
@@ -13,12 +21,12 @@ use tokio::sync::RwLock;
 async fn main() {
     let pg_pool = configure_postgresql().await;
 
-    let user_store = HashmapUserStore::default();
+    let user_store = Arc::new(RwLock::new(PostgresUserStore::new(pg_pool)));
     let banned_token_store = HashsetBannedTokenStore::default();
     let two_fa_code_store = HashmapTwoFACodeStore::default();
     let email_client = MockEmailClient {};
     let app_state = AppState::new(
-        Arc::new(RwLock::new(user_store)),
+        user_store,
         Arc::new(RwLock::new(banned_token_store)),
         Arc::new(RwLock::new(two_fa_code_store)),
         Arc::new(RwLock::new(email_client)),
@@ -37,7 +45,7 @@ async fn configure_postgresql() -> PgPool {
         .await
         .expect("Failed to create Postgres connection pool!");
 
-    // Run database migrations against our test database! 
+    // Run database migrations against our test database!
     sqlx::migrate!()
         .run(&pg_pool)
         .await
