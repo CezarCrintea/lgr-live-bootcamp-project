@@ -4,13 +4,12 @@ use auth_service::{
     utils::constants::JWT_COOKIE_NAME,
     ErrorResponse,
 };
+use test_helpers::api_test;
 
 use crate::helpers::{get_random_email, TestApp};
 
-#[tokio::test]
+#[api_test]
 async fn should_return_422_if_malformed_input() {
-    let app = TestApp::new().await;
-
     let random_email = get_random_email();
 
     let test_cases = [
@@ -49,10 +48,8 @@ async fn should_return_422_if_malformed_input() {
     }
 }
 
-#[tokio::test]
+#[api_test]
 async fn should_return_400_if_invalid_input() {
-    let app = TestApp::new().await;
-
     let random_email = get_random_email();
 
     let inputs = [
@@ -94,10 +91,8 @@ async fn should_return_400_if_invalid_input() {
     }
 }
 
-#[tokio::test]
+#[api_test]
 async fn should_return_401_if_incorrect_credentials() {
-    let app = TestApp::new().await;
-
     let random_email = get_random_email();
 
     let verify_2fa_body = serde_json::json!({
@@ -120,10 +115,8 @@ async fn should_return_401_if_incorrect_credentials() {
     );
 }
 
-#[tokio::test]
+#[api_test]
 async fn should_return_401_if_old_code() {
-    let app = TestApp::new().await;
-
     let random_email = get_random_email();
 
     let signup_body = serde_json::json!({
@@ -174,10 +167,8 @@ async fn should_return_401_if_old_code() {
     );
 }
 
-#[tokio::test]
+#[api_test]
 async fn should_return_200_if_correct_code() {
-    let app = TestApp::new().await;
-
     let random_email = get_random_email();
 
     let signup_body = serde_json::json!({
@@ -228,10 +219,8 @@ async fn should_return_200_if_correct_code() {
     assert!(!auth_cookie.value().is_empty());
 }
 
-#[tokio::test]
+#[api_test]
 async fn should_return_401_if_same_code_twice() {
-    let app = TestApp::new().await;
-
     let random_email = get_random_email();
 
     let signup_body = serde_json::json!({

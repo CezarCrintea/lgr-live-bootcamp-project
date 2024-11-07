@@ -5,7 +5,7 @@ use auth_service::{
     get_postgres_pool,
     services::{
         data_stores::{
-            hashmap_two_fa_code_store::HashmapTwoFACodeStore, hashmap_user_store::HashmapUserStore,
+            hashmap_two_fa_code_store::HashmapTwoFACodeStore,
             hashset_banned_token_store::HashsetBannedTokenStore,
             postgres_user_store::PostgresUserStore,
         },
