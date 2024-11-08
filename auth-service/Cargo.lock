@@ -112,7 +112,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
- "test_helpers",
+ "test-helpers",
  "tokio",
  "tower-http",
  "uuid",
@@ -2173,9 +2173,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "test_helpers"
+name = "test-helpers"
 version = "0.1.0"
-source = "git+https://github.com/letsgetrusty/test-helpers.git#c1110f07f8de3b4ba181b130b3040df5a0e96a86"
+source = "git+https://github.com/CezarCrintea/test-helpers.git#1ddfb07beb4ecf71fc38067055c28c9ad7eb59a9"
 dependencies = [
  "quote",
  "syn 2.0.72",
