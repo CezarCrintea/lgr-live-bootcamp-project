@@ -1,10 +1,12 @@
+use color_eyre::eyre::{eyre, Result};
+
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Email(String);
 
 impl Email {
-    pub fn parse(email: String) -> Result<Email, String> {
+    pub fn parse(email: String) -> Result<Email> {
         if !email.contains("@") {
-            return Err("invalid email".to_owned());
+            return Err(eyre!(format!("{} is not a valid email.", email)));
         }
 
         Ok(Email(email))
@@ -34,7 +36,6 @@ mod tests {
         let result = Email::parse("userexample.com".to_string());
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "invalid email");
     }
 
     #[test]

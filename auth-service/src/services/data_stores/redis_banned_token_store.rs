@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use color_eyre::eyre::Context;
 use redis::{Commands, Connection};
 use tokio::sync::RwLock;
 
@@ -20,26 +21,41 @@ impl RedisBannedTokenStore {
 
 #[async_trait::async_trait]
 impl BannedTokenStore for RedisBannedTokenStore {
+    #[tracing::instrument(name = "AddToken", skip_all)]
     async fn add_token(&mut self, token: String) -> Result<(), BannedTokenStoreError> {
-        let key = get_key(&token);
+        let token_key = get_key(token.as_str());
+
         let value = true;
-        let mut conn = self.conn.write().await;
-        let ttl = TOKEN_TTL_SECONDS
+
+        let ttl: u64 = TOKEN_TTL_SECONDS
             .try_into()
-            .map_err(|_| BannedTokenStoreError::UnexpectedError)?;
-        let _: () = conn
-            .set_ex(&key, value, ttl) // Set the key with the value and the TTL
-            .map_err(|_| BannedTokenStoreError::UnexpectedError)?;
+            .wrap_err("failed to cast TOKEN_TTL_SECONDS to u64") // New!
+            .map_err(BannedTokenStoreError::UnexpectedError)?; // Updated!
+
+        let _: () = self
+            .conn
+            .write()
+            .await
+            .set_ex(&token_key, value, ttl)
+            .wrap_err("failed to set banned token in Redis") // New!
+            .map_err(BannedTokenStoreError::UnexpectedError)?; // Updated!
+
         Ok(())
     }
 
+    #[tracing::instrument(name = "ContainsToken", skip_all)]
     async fn contains_token(&self, token: &str) -> Result<bool, BannedTokenStoreError> {
-        let key = get_key(token);
-        let mut conn = self.conn.write().await;
-        let exists: bool = conn
-            .exists(&key)
-            .map_err(|_| BannedTokenStoreError::UnexpectedError)?;
-        Ok(exists)
+        let token_key = get_key(token);
+
+        let is_banned: bool = self
+            .conn
+            .write()
+            .await
+            .exists(&token_key)
+            .wrap_err("failed to check if token exists in Redis") // New!
+            .map_err(BannedTokenStoreError::UnexpectedError)?; // Updated!
+
+        Ok(is_banned)
     }
 }
 

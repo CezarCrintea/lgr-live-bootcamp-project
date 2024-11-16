@@ -1,10 +1,12 @@
+use color_eyre::eyre::{eyre, Result};
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Password(String);
 
 impl Password {
-    pub fn parse(password: String) -> Result<Password, String> {
+    pub fn parse(password: String) -> Result<Password> {
         if password.chars().count() < 8 {
-            return Err("password too short".to_string());
+            return Err(eyre!("password too short"));
         }
 
         Ok(Password(password))
@@ -34,7 +36,6 @@ mod tests {
         let result = Password::parse("short".to_string());
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "password too short");
     }
 
     #[test]
