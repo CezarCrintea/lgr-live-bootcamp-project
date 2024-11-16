@@ -1,11 +1,15 @@
 use auth_service::{
-    domain::{data_stores::LoginAttemptId, Email},
+    domain::Email,
     routes::TwoFactorAuthResponse,
     utils::constants::JWT_COOKIE_NAME,
     ErrorResponse,
 };
-use secrecy::Secret;
+use secrecy::{ExposeSecret, Secret};
 use test_helpers::api_test;
+use wiremock::{
+    matchers::{method, path},
+    Mock, ResponseTemplate,
+};
 
 use crate::helpers::{get_random_email, TestApp};
 
@@ -148,9 +152,16 @@ async fn should_return_206_if_valid_credentials_and_2fa_enabled() {
 
     assert_eq!(response.status().as_u16(), 201);
 
+    Mock::given(path("/email"))
+        .and(method("POST"))
+        .respond_with(ResponseTemplate::new(200))
+        .expect(1)
+        .mount(&app.email_server)
+        .await;
+
     let login_body = serde_json::json!({
         "email": random_email,
-        "password": "password123",
+        "password": "password123"
     });
 
     let response = app.post_login(&login_body).await;
@@ -165,11 +176,14 @@ async fn should_return_206_if_valid_credentials_and_2fa_enabled() {
     assert_eq!(json_body.message, "2FA required".to_owned());
 
     let two_fa_code_store = app.two_fa_code_store.read().await;
-    let email = Email::parse(Secret::new(random_email)).unwrap();
-    let stored_code = two_fa_code_store.get_code(&email).await;
-    assert!(stored_code.is_ok());
-    let (stored_login_attempt_id, _) = stored_code.unwrap();
-    let expected_login_attempt_id =
-        LoginAttemptId::parse(Secret::new(json_body.login_attempt_id)).unwrap();
-    assert_eq!(stored_login_attempt_id, expected_login_attempt_id);
+
+    let code_tuple = two_fa_code_store
+        .get_code(&Email::parse(Secret::new(random_email)).unwrap())
+        .await
+        .expect("Failed to get 2FA code");
+
+    assert_eq!(
+        code_tuple.0.as_ref().expose_secret(),
+        &json_body.login_attempt_id
+    );
 }
