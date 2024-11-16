@@ -16,7 +16,7 @@ async fn should_return_400_if_jwt_cookie_missing() {
             .await
             .expect("Could not deserialize response body to ErrorResponse")
             .error,
-        "Missing token".to_owned()
+        "Missing auth token".to_owned()
     );
 }
 
@@ -41,7 +41,7 @@ async fn should_return_401_if_invalid_token() {
             .await
             .expect("Could not deserialize response body to ErrorResponse")
             .error,
-        "Invalid token".to_owned()
+        "Invalid auth token".to_owned()
     );
 }
 
@@ -139,6 +139,6 @@ async fn should_return_400_if_logout_called_twice_in_a_row() {
             .await
             .expect("Could not deserialize response body to ErrorResponse")
             .error,
-        "Missing token".to_owned()
+        "Missing auth token".to_owned()
     );
 }
