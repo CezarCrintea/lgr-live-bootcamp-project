@@ -1,5 +1,6 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use axum_extra::extract::CookieJar;
+use secrecy::Secret;
 use serde::Deserialize;
 
 use crate::{
@@ -20,7 +21,8 @@ pub async fn verify_2fa(
     }
     let email = email.unwrap();
 
-    let login_attempt_id = LoginAttemptId::parse(request.login_attempt_id);
+    let login_attempt_id =
+        LoginAttemptId::parse(request.login_attempt_id);
     if login_attempt_id.is_err() {
         return (jar, Err(AuthAPIError::InvalidCredentials));
     }
@@ -59,9 +61,9 @@ pub async fn verify_2fa(
 
 #[derive(Deserialize)]
 pub struct Verify2FARequest {
-    pub email: String,
+    pub email: Secret<String>,
     #[serde(rename = "loginAttemptId")]
-    pub login_attempt_id: String,
+    pub login_attempt_id: Secret<String>,
     #[serde(rename = "2FACode")]
-    pub two_fa_code: String,
+    pub two_fa_code: Secret<String>,
 }

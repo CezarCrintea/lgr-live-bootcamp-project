@@ -42,13 +42,15 @@ impl UserStore for HashmapUserStore {
 
 #[cfg(test)]
 mod tests {
+    use secrecy::Secret;
+
     use super::*;
 
     #[tokio::test]
     async fn test_add_user() {
         let mut store = HashmapUserStore::default();
-        let email = Email::parse("1@email.com".to_string()).unwrap();
-        let password = Password::parse("password123".to_string()).unwrap();
+        let email = Email::parse(Secret::new("1@email.com".to_string())).unwrap();
+        let password = Password::parse(Secret::new("password123".to_string())).unwrap();
         let user = User::new(email.clone(), password.clone(), false);
 
         let result = store.add_user(user.clone()).await;
@@ -62,8 +64,8 @@ mod tests {
     #[tokio::test]
     async fn test_get_user() {
         let mut store = HashmapUserStore::default();
-        let email = Email::parse("1@email.com".to_string()).unwrap();
-        let password = Password::parse("password123".to_string()).unwrap();
+        let email = Email::parse(Secret::new("1@email.com".to_string())).unwrap();
+        let password = Password::parse(Secret::new("password123".to_string())).unwrap();
         let user = User::new(email.clone(), password.clone(), false);
         store.users.insert(email.clone(), user.clone());
 
@@ -75,8 +77,8 @@ mod tests {
     #[tokio::test]
     async fn test_validate_user() {
         let mut store = HashmapUserStore::default();
-        let email = Email::parse("1@email.com".to_string()).unwrap();
-        let password = Password::parse("password123".to_string()).unwrap();
+        let email = Email::parse(Secret::new("1@email.com".to_string())).unwrap();
+        let password = Password::parse(Secret::new("password123".to_string())).unwrap();
         let user = User::new(email.clone(), password.clone(), false);
         store.users.insert(email.clone(), user.clone());
 

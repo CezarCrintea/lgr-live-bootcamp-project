@@ -1,46 +1,65 @@
 use color_eyre::eyre::{eyre, Result};
+use secrecy::{ExposeSecret, Secret};
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct Password(String);
+#[derive(Clone, Debug)]
+pub struct Password(Secret<String>);
 
-impl Password {
-    pub fn parse(password: String) -> Result<Password> {
-        if password.chars().count() < 8 {
-            return Err(eyre!("password too short"));
-        }
-
-        Ok(Password(password))
+impl PartialEq for Password {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.expose_secret() == other.0.expose_secret()
     }
 }
 
-impl AsRef<str> for Password {
-    fn as_ref(&self) -> &str {
+impl Password {
+    pub fn parse(s: Secret<String>) -> Result<Password> {
+        if validate_password(&s) {
+            Ok(Self(s))
+        } else {
+            Err(eyre!("Failed to parse string to a Password type"))
+        }
+    }
+}
+
+fn validate_password(s: &Secret<String>) -> bool {
+    s.expose_secret().len() >= 8
+}
+
+impl AsRef<Secret<String>> for Password {
+    fn as_ref(&self) -> &Secret<String> {
         &self.0
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::Password;
+
+    use fake::faker::internet::en::Password as FakePassword;
+    use fake::Fake;
+    use secrecy::Secret;
 
     #[test]
-    fn test_valid_password() {
-        let result = Password::parse("password123".to_string());
-
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap().as_ref(), "password123");
+    fn empty_string_is_rejected() {
+        let password = Secret::new("".to_string());
+        assert!(Password::parse(password).is_err());
+    }
+    #[test]
+    fn string_less_than_8_characters_is_rejected() {
+        let password = Secret::new("1234567".to_string());
+        assert!(Password::parse(password).is_err());
     }
 
-    #[test]
-    fn test_invalid_password_too_short() {
-        let result = Password::parse("short".to_string());
+    #[derive(Debug, Clone)]
+    struct ValidPasswordFixture(pub Secret<String>);
 
-        assert!(result.is_err());
+    impl quickcheck::Arbitrary for ValidPasswordFixture {
+        fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> Self {
+            let password = FakePassword(8..30).fake_with_rng(g);
+            Self(Secret::new(password))
+        }
     }
-
-    #[test]
-    fn test_as_ref_trait() {
-        let password = Password::parse("password123".to_string()).unwrap();
-        assert_eq!(password.as_ref(), "password123");
+    #[quickcheck_macros::quickcheck]
+    fn valid_passwords_are_parsed_successfully(valid_password: ValidPasswordFixture) -> bool {
+        Password::parse(valid_password.0).is_ok()
     }
 }

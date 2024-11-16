@@ -40,14 +40,16 @@ impl TwoFACodeStore for HashmapTwoFACodeStore {
 
 #[cfg(test)]
 mod tests {
+    use secrecy::Secret;
+
     use super::*;
 
     #[tokio::test]
     async fn test_add_code() {
         let mut store = HashmapTwoFACodeStore::default();
-        let email = Email::parse("test@example.com".to_string()).unwrap();
+        let email = Email::parse(Secret::new("test@example.com".to_string())).unwrap();
         let login_attempt_id = LoginAttemptId::default();
-        let code = TwoFACode::parse("123456".to_string()).unwrap();
+        let code = TwoFACode::parse(Secret::new("123456".to_string())).unwrap();
 
         let result = store
             .add_code(email.clone(), login_attempt_id.clone(), code.clone())
@@ -59,9 +61,9 @@ mod tests {
     #[tokio::test]
     async fn test_remove_code() {
         let mut store = HashmapTwoFACodeStore::default();
-        let email = Email::parse("test@example.com".to_string()).unwrap();
+        let email = Email::parse(Secret::new("test@example.com".to_string())).unwrap();
         let login_attempt_id = LoginAttemptId::default();
-        let code = TwoFACode::parse("123456".to_string()).unwrap();
+        let code = TwoFACode::parse(Secret::new("123456".to_string())).unwrap();
 
         store
             .add_code(email.clone(), login_attempt_id.clone(), code.clone())
@@ -76,9 +78,9 @@ mod tests {
     #[tokio::test]
     async fn test_get_code() {
         let mut store = HashmapTwoFACodeStore::default();
-        let email = Email::parse("test@example.com".to_string()).unwrap();
+        let email = Email::parse(Secret::new("test@example.com".to_string())).unwrap();
         let login_attempt_id = LoginAttemptId::default();
-        let code = TwoFACode::parse("123456".to_string()).unwrap();
+        let code = TwoFACode::parse(Secret::new("123456".to_string())).unwrap();
 
         store
             .add_code(email.clone(), login_attempt_id.clone(), code.clone())
