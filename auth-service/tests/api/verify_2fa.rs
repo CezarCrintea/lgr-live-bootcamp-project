@@ -218,42 +218,54 @@ async fn should_return_401_if_old_code() {
         .mount(&app.email_server)
         .await;
 
+    // First login call
+
     let login_body = serde_json::json!({
         "email": random_email,
-        "password": "password123",
+        "password": "password123"
     });
 
     let response = app.post_login(&login_body).await;
 
     assert_eq!(response.status().as_u16(), 206);
 
-    let json_body = response
+    let response_body = response
         .json::<TwoFactorAuthResponse>()
         .await
         .expect("Could not deserialize response body to TwoFactorAuthResponse");
 
+    assert_eq!(response_body.message, "2FA required".to_owned());
+    assert!(!response_body.login_attempt_id.is_empty());
+
+    let login_attempt_id = response_body.login_attempt_id;
+
+    let code_tuple = app
+        .two_fa_code_store
+        .read()
+        .await
+        .get_code(&Email::parse(Secret::new(random_email.clone())).unwrap())
+        .await
+        .unwrap();
+
+    let code = code_tuple.1.as_ref();
+
+    // Second login call
+
     let response = app.post_login(&login_body).await;
 
     assert_eq!(response.status().as_u16(), 206);
 
-    let verify_2fa_body = serde_json::json!({
-        "email":random_email,
-        "loginAttemptId": json_body.login_attempt_id,
-        "2FACode": TwoFACode::default().as_ref().expose_secret().to_string(),
+    // 2FA attempt with old login_attempt_id and code
+
+    let request_body = serde_json::json!({
+        "email": random_email,
+        "loginAttemptId": login_attempt_id,
+        "2FACode": code.expose_secret()
     });
 
-    let response = app.post_verify_2fa(&verify_2fa_body).await;
+    let response = app.post_verify_2fa(&request_body).await;
 
     assert_eq!(response.status().as_u16(), 401);
-
-    assert_eq!(
-        response
-            .json::<ErrorResponse>()
-            .await
-            .expect("Could not deserialize response body to ErrorResponse")
-            .error,
-        "Incorrect credentials".to_owned()
-    );
 }
 
 #[api_test]
